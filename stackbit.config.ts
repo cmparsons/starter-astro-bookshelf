@@ -17,8 +17,7 @@ export default defineStackbitConfig({
   postInstallCommand:
     "npm i --no-save @stackbit/types @stackbit/cms-contentful",
   modelExtensions: [
-    { name: "root", type: "page", urlPath: "/" },
-    { name: "book", type: "page", urlPath: "/books/{slug}" },
-    { name: "author", type: "page", urlPath: "/author/{slug}" },
+    { name: "bookReferencePage", type: "page", urlPath: "/books/{slug}" },
+    { name: "bookAuthor", type: "page", urlPath: "/author/{slug}" },
   ],
 });
