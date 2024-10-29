@@ -31,9 +31,8 @@ async function getAllBooks() {
 async function getSingleBook(id) {
   const entry = await contentful.getEntry(id);
 
-  console.log(JSON.stringify(entry.fields.description.content[0]));
-
   return {
+    id: entry.sys.id,
     title: entry.fields.title,
     coverImage: {
       url: entry.fields.coverImage?.fields?.file?.url,
@@ -51,6 +50,7 @@ async function getAuthor(id) {
   const entry = await contentful.getEntry(id);
 
   return {
+    id: entry.sys.id,
     name: entry.fields.name,
     avatar: {
       url: entry.fields.avatar?.fields?.file?.url,
