@@ -1,12 +1,15 @@
 import { createClient } from "contentful";
 
 const IS_DEV = import.meta.env.DEV;
-const SPACE = import.meta.env.CONTENTFUL_SPACE_ID
-const TOKEN = IS_DEV ? import.meta.env.CONTENTFUL_PREVIEW_TOKEN : import.meta.env.CONTENTFUL_DELIVERY_TOKEN
+const SPACE = import.meta.env.CONTENTFUL_SPACE_ID;
+const TOKEN = IS_DEV
+  ? import.meta.env.CONTENTFUL_PREVIEW_TOKEN
+  : import.meta.env.CONTENTFUL_DELIVERY_TOKEN;
 
 const contentful = createClient({
   space: SPACE,
   accessToken: TOKEN,
+  host: IS_DEV ? "preview.contentful.com" : "cdn.contentful.com",
 });
 
 async function getAllBooks() {
@@ -18,17 +21,25 @@ async function getAllBooks() {
     id: item.sys.id,
     title: item.fields.title,
     author: item.fields.author?.fields?.name,
-    coverImage: item.fields.coverImage?.fields?.file?.url,
+    coverImage: {
+      url: item.fields.coverImage?.fields?.file?.url,
+      description: item.fields.coverImage?.fields?.description,
+    },
   }));
 }
 
 async function getSingleBook(id) {
   const entry = await contentful.getEntry(id);
 
+  console.log(JSON.stringify(entry.fields.description.content[0]));
+
   return {
     title: entry.fields.title,
-    coverImage: entry.fields.coverImage?.fields?.file?.url,
-    description: entry.fields.description,
+    coverImage: {
+      url: entry.fields.coverImage?.fields?.file?.url,
+      description: entry.fields.coverImage?.fields?.description,
+    },
+    description: { json: entry.fields.description.content[0] },
     author: {
       id: entry.fields.author?.sys.id,
       name: entry.fields.author?.fields?.name,
@@ -45,7 +56,7 @@ async function getAuthor(id) {
       url: entry.fields.avatar?.fields?.file?.url,
       description: entry.fields.avatar?.fields?.description,
     },
-    bio: entry.fields.bio,
+    bio: { json: entry.fields.bio.content[0] },
     books:
       entry.fields.linkedFrom?.bookReferencePageCollection?.items?.map(
         (item) => item.fields.title
