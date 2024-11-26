@@ -1,99 +1,71 @@
-const SPACE = import.meta.env.CONTENTFUL_SPACE_ID
-const TOKEN = import.meta.env.CONTENTFUL_DELIVERY_TOKEN
+import { createClient } from "contentful";
 
-async function apiCall(query, variables) {
-  const fetchUrl = `https://graphql.contentful.com/content/v1/spaces/${SPACE}/environments/master`;
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${TOKEN}`,
-    },
-    body: JSON.stringify({ query, variables }),
-  }
-  return await fetch(fetchUrl, options)
-}
+const IS_DEV = import.meta.env.DEV;
+const SPACE = import.meta.env.CONTENTFUL_SPACE_ID;
+const TOKEN = IS_DEV
+  ? import.meta.env.CONTENTFUL_PREVIEW_TOKEN
+  : import.meta.env.CONTENTFUL_DELIVERY_TOKEN;
+
+const contentful = createClient({
+  space: SPACE,
+  accessToken: TOKEN,
+  host: IS_DEV ? "preview.contentful.com" : "cdn.contentful.com",
+});
 
 async function getAllBooks() {
+  const response = await contentful.getEntries({
+    content_type: "bookReferencePage",
+  });
 
-  const query = `
-    {
-        bookReferencePageCollection {
-          items {
-            sys {
-                id
-            }
-            title
-            author {
-              name
-            }
-            coverImage {
-              url
-            }
-          }
-        }
-      }`;
-  const response = await apiCall(query);
-  const json = await response.json()
-  return await json.data.bookReferencePageCollection.items;
+  return response.items.map((item) => ({
+    id: item.sys.id,
+    title: item.fields.title,
+    author: item.fields.author?.fields?.name,
+    coverImage: {
+      url: item.fields.coverImage?.fields?.file?.url,
+      description: item.fields.coverImage?.fields?.description,
+    },
+  }));
 }
 
 async function getSingleBook(id) {
-  const query = `
-    query ($id: String!) {
-        bookReferencePage(id: $id) {
-          title
-          coverImage {
-            url
-          }
-          description {
-            json
-          }
-          author {
-            sys {
-              id
-            }
-            name
-          }
-        }
-      }
-    `;
-  const variables = {
-    id: id
+  const entry = await contentful.getEntry(id);
+
+  return {
+    id: entry.sys.id,
+    title: entry.fields.title,
+    coverImage: {
+      url: entry.fields.coverImage?.fields?.file?.url,
+      description: entry.fields.coverImage?.fields?.description,
+    },
+    description: { json: entry.fields.description?.content?.[0] },
+    author: {
+      id: entry.fields.author?.sys.id,
+      name: entry.fields.author?.fields?.name,
+    },
   };
-  const response = await apiCall(query, variables);
-  const json = await response.json();
-  return await json.data.bookReferencePage
 }
 
 async function getAuthor(id) {
-  const query = `
-    query ($id: String!) {
-      bookAuthor(id:$id) {
-        name
-        avatar {
-          url
-          description
-        }
-        bio {
-          json
-        }
-        linkedFrom {
-          bookReferencePageCollection {
-            items {
-              title
-            }
-          }
-        }
-      }
-    }
-    `;
-  const variables = {
-    id: id
+  const entry = await contentful.getEntry(id);
+
+  return {
+    id: entry.sys.id,
+    name: entry.fields.name,
+    avatar: {
+      url: entry.fields.avatar?.fields?.file?.url,
+      description: entry.fields.avatar?.fields?.description,
+    },
+    bio: { json: entry.fields.bio.content[0] },
+    books:
+      entry.fields.linkedFrom?.bookReferencePageCollection?.items?.map(
+        (item) => item.fields.title
+      ) || [],
   };
-  const response = await apiCall(query, variables);
-  const json = await response.json();
-  return await json.data.bookAuthor
 }
 
-export const client = { getAllBooks, getSingleBook, getAuthor }
+export const client = {
+  getAllBooks,
+  getSingleBook,
+  getAuthor,
+};

@@ -19,15 +19,21 @@ const books = await client.getAllBooks();
     >
       {
         books.map((book) => (
-          <li class="mt-4 ">
-            <a href={`books/${book.sys.id}`} class="group">
+          <li class="mt-4" data-sb-object-id={book.id}>
+            <a href={`books/${book.id}`} class="group">
               <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-lg bg-gray-200 xl:aspect-h-8 xl:aspect-w-7">
                 <img
                   src={book.coverImage.url}
                   class="h-full w-full object-cover object-center group-hover:opacity-75"
+                  data-sb-field-path="coverImage"
                 />
               </div>
-              <h3 class="mt-4 text-lg text-white text-center">{book.title}</h3>
+              <h3
+                class="mt-4 text-lg text-white text-center"
+                data-sb-field-path="title"
+              >
+                {book.title}
+              </h3>
             </a>
           </li>
         ))
