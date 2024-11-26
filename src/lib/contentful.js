@@ -38,7 +38,7 @@ async function getSingleBook(id) {
       url: entry.fields.coverImage?.fields?.file?.url,
       description: entry.fields.coverImage?.fields?.description,
     },
-    description: { json: entry.fields.description.content[0] },
+    description: { json: entry.fields.description?.content?.[0] },
     author: {
       id: entry.fields.author?.sys.id,
       name: entry.fields.author?.fields?.name,
